@@ -113,6 +113,77 @@ public class Model extends Observable {
         // TODO: Modify this.board (and perhaps this.score) to account
         // for the tilt to the Side SIDE. If the board changed, set the
         // changed local variable to true.
+        this.board.setViewingPerspective(side);
+
+        int size = this.board.size();
+
+        for (int col = 0; col < size; col++)
+        {
+            int nullIdx = size - 1;
+            while (nullIdx >= 0 && this.board.tile(col, nullIdx) != null) nullIdx--;
+            int fullIdx = nullIdx - 1;
+            while (fullIdx >= 0 && this.board.tile(col, fullIdx) == null) fullIdx--;
+
+            while (fullIdx >= 0)
+            {
+                this.board.move(col, nullIdx, this.board.tile(col, fullIdx));
+                changed = true;
+
+                nullIdx--;
+                while (fullIdx >= 0 && this.board.tile(col, fullIdx) == null) fullIdx--;
+            }
+
+
+            int prev = size - 1;
+            while (prev >= 0 && this.board.tile(col, prev) == null) prev--;
+            int cur = prev - 1;
+            while (cur >= 0 && this.board.tile(col, cur) == null) cur--;
+
+            while (cur >= 0)
+            {
+                if (this.board.tile(col, prev).value() == this.board.tile(col, cur).value())
+                {
+
+                    this.board.move(col, prev, this.board.tile(col, cur));
+                    this.score += this.board.tile(col, prev).value();
+                    changed = true;
+
+                    prev--;
+                    while (prev >= 0 && this.board.tile(col, prev) == null) prev--;
+                    cur = prev - 1;
+                    while (cur >= 0 && this.board.tile(col, cur) == null) cur--;
+                } else
+                {
+                    if (cur == prev - 1){}
+                    else // never comes in
+                    {
+                        this.board.move(col, prev - 1, this.board.tile(cur, col));
+                        changed = true;
+                    }
+                    prev--;
+                    cur = prev - 1;
+                    while (cur >= 0 && this.board.tile(col, cur) == null) cur--;
+                }
+            }
+
+            nullIdx = size - 1;
+            while (nullIdx >= 0 && this.board.tile(col, nullIdx) != null) nullIdx--;
+            fullIdx = nullIdx - 1;
+            while (fullIdx >= 0 && this.board.tile(col, fullIdx) == null) fullIdx--;
+
+            while (fullIdx >= 0)
+            {
+                this.board.move(col, nullIdx, this.board.tile(col, fullIdx));
+                changed = true;
+
+                nullIdx--;
+                while (fullIdx >= 0 && this.board.tile(col, fullIdx) == null) fullIdx--;
+            }
+
+        }
+
+        this.board.setViewingPerspective(Side.NORTH);
+
 
         checkGameOver();
         if (changed) {
@@ -138,6 +209,16 @@ public class Model extends Observable {
      * */
     public static boolean emptySpaceExists(Board b) {
         // TODO: Fill in this function.
+        int size = b.size();
+
+        for (int i = 0; i < size; i++)
+        {
+            for (int j = 0; j < size; j++)
+            {
+                if (b.tile(i, j) == null) return true;
+            }
+        }
+
         return false;
     }
 
@@ -148,6 +229,16 @@ public class Model extends Observable {
      */
     public static boolean maxTileExists(Board b) {
         // TODO: Fill in this function.
+        int size  = b.size();
+
+        for (int i = 0; i < size; i++)
+        {
+            for (int j = 0; j < size; j++)
+            {
+                if (b.tile(i, j) != null && b.tile(i, j).value() == MAX_PIECE) return true;
+            }
+        }
+
         return false;
     }
 
@@ -159,6 +250,32 @@ public class Model extends Observable {
      */
     public static boolean atLeastOneMoveExists(Board b) {
         // TODO: Fill in this function.
+
+        // Case 1: There is at least one empty space on the board.
+        if (emptySpaceExists(b)) return true;
+        // Case 2: There are two adjacent tiles with the same value.
+        int[] dirX = {1, -1, 0, 0}, dirY = {0, 0, 1, -1};
+        int size = b.size();
+
+        for (int row = 0; row < size; row++)
+        {
+            for (int col = 0; col < size; col++)
+            {
+                if (b.tile(row, col) == null) continue;
+
+                int targetVal = b.tile(row, col).value();
+                for (int i = 0; i < 4; i++)
+                {
+                    int newRow = row + dirX[i], newCol = col + dirY[i];
+
+                    if (newRow >= size || newRow < 0 || newCol >= size || newCol < 0) continue;
+                    if (b.tile(newRow, newCol) == null) continue;
+
+                    if (b.tile(newRow, newCol).value() == targetVal) return true;
+                }
+            }
+        }
+
         return false;
     }
 
